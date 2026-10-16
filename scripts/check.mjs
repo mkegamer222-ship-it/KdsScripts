@@ -27,7 +27,8 @@ const ok = (m) => console.log("  \x1b[32m✔\x1b[0m " + m);
 const bad = (m) => console.log("  \x1b[31m✘\x1b[0m " + m);
 const warn = (m) => console.log("  \x1b[33m!\x1b[0m " + m);
 
-const raw = process.env.MONGODB_URI || "";
+// Mesma limpeza de lib/mongodb.ts: tira colchetes / "](mailto:...)" da URI colada.
+const raw = (process.env.MONGODB_URI || "").replace(/\]\([^)]*\)/g, "").replace(/[\[\]]/g, "").trim();
 const dbName = process.env.MONGODB_DB || "kdss";
 
 console.log("\n=== KDS Scripts · diagnóstico do banco ===\n");

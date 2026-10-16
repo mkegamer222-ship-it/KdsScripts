@@ -172,7 +172,17 @@ export async function registerUser(
       user: { id: String(res.insertedId), username: doc.displayName, role: "user" },
     };
   } catch (err: any) {
-    return { ok: false, error: "Não foi possível criar a conta agora." };
+    // Nunca engolir o erro em silêncio: era por isso que só aparecia a
+    // mensagem genérica e ninguém sabia que o banco estava fora/errado.
+    console.error("[auth] registerUser falhou:", err?.code || "", err?.message || err);
+    if (err?.code === 11000) return { ok: false, error: "Esse usuário já está em uso." };
+    if (err?.name === "DbUnavailableError" || err?.code === "DB_UNAVAILABLE") {
+      return {
+        ok: false,
+        error: "Banco de dados indisponível no momento. Tente de novo em alguns segundos.",
+      };
+    }
+    return { ok: false, error: "Não foi possível criar a conta agora. Tente de novo em alguns segundos." };
   }
 }
 
@@ -200,8 +210,15 @@ export async function loginUser(usernameRaw: string, password: string): Promise<
         role: user.role,
       },
     };
-  } catch {
-    return { ok: false, error: "Não foi possível entrar agora." };
+  } catch (err: any) {
+    console.error("[auth] loginUser falhou:", err?.code || "", err?.message || err);
+    if (err?.name === "DbUnavailableError" || err?.code === "DB_UNAVAILABLE") {
+      return {
+        ok: false,
+        error: "Banco de dados indisponível no momento. Tente de novo em alguns segundos.",
+      };
+    }
+    return { ok: false, error: "Não foi possível entrar agora. Tente de novo em alguns segundos." };
   }
 }
 
