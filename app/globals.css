@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 /* ============================================================
-   KDS Scripts — tema (dark + laranja)
+   KDS Scripts — tema (verde + preto profundo)
    ============================================================ */
 @theme {
-  --color-ink-950: #07080b;
-  --color-ink-900: #0b0d12;
-  --color-ink-850: #0f1218;
-  --color-ink-800: #131720;
-  --color-ink-700: #1b212c;
-  --color-ink-600: #262e3b;
-  --color-brand-300: #ffb27a;
-  --color-brand-400: #ff8f3c;
-  --color-brand-500: #ff6a1a;
-  --color-brand-600: #e5540d;
-  --color-brand-700: #b8430a;
+  --color-ink-950: #050807;
+  --color-ink-900: #070d0a;
+  --color-ink-850: #0a120d;
+  --color-ink-800: #0d1810;
+  --color-ink-700: #122418;
+  --color-ink-600: #1a3524;
+  --color-brand-300: #a7f3d0;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Fira Code", Menlo,
@@ -31,22 +31,22 @@ html {
 }
 
 body {
-  background-color: #07080b;
+  background-color: #050807;
   color: #e7eaf0;
   font-family: var(--font-sans);
   overflow-x: hidden;
 }
 
-/* fundo com brilho laranja */
+/* fundo preto profundo com brilho verde */
 .bg-aurora {
   position: fixed;
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(680px 420px at 12% -8%, rgba(255, 106, 26, 0.20), transparent 65%),
-    radial-gradient(560px 420px at 88% 4%, rgba(124, 92, 255, 0.16), transparent 65%),
-    radial-gradient(700px 500px at 50% 108%, rgba(255, 157, 0, 0.10), transparent 70%),
-    #07080b;
+    radial-gradient(680px 420px at 12% -8%, rgba(34, 197, 94, 0.22), transparent 65%),
+    radial-gradient(560px 420px at 88% 4%, rgba(16, 185, 129, 0.15), transparent 65%),
+    radial-gradient(700px 500px at 50% 108%, rgba(132, 204, 22, 0.09), transparent 70%),
+    #050807;
 }
 
 .grid-lines {
@@ -73,8 +73,8 @@ body {
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 106, 26, 0.55);
-  box-shadow: 0 18px 40px -18px rgba(255, 106, 26, 0.55);
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 18px 40px -18px rgba(34, 197, 94, 0.55);
 }
 
 .btn {
@@ -95,9 +95,9 @@ body {
   transform: scale(0.975);
 }
 .btn-primary {
-  background: linear-gradient(135deg, #ff7a2f, #e5540d);
+  background: linear-gradient(135deg, #3ddc84, #149a4e);
   color: #fff;
-  box-shadow: 0 10px 30px -12px rgba(255, 106, 26, 0.9);
+  box-shadow: 0 10px 30px -12px rgba(34, 197, 94, 0.9);
 }
 .btn-primary:hover {
   filter: brightness(1.08);
@@ -109,21 +109,21 @@ body {
 }
 .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 106, 26, 0.4);
+  border-color: rgba(34, 197, 94, 0.4);
 }
 .btn-dark {
-  background: #0d1016;
+  background: #0a120c;
   border-color: rgba(255, 255, 255, 0.09);
   color: #cfd6e4;
 }
 .btn-dark:hover {
-  border-color: rgba(255, 106, 26, 0.5);
+  border-color: rgba(34, 197, 94, 0.5);
   color: #fff;
 }
 
 .input {
   width: 100%;
-  background: rgba(9, 11, 15, 0.9);
+  background: rgba(7, 12, 9, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 0.7rem 0.9rem;
@@ -136,8 +136,8 @@ body {
   color: #6b7687;
 }
 .input:focus {
-  border-color: rgba(255, 106, 26, 0.75);
-  box-shadow: 0 0 0 4px rgba(255, 106, 26, 0.14);
+  border-color: rgba(34, 197, 94, 0.75);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
 }
 
 .chip {
@@ -155,9 +155,9 @@ body {
   background: rgba(255, 255, 255, 0.04);
 }
 .chip-brand {
-  border-color: rgba(255, 106, 26, 0.45);
-  color: #ffb27a;
-  background: rgba(255, 106, 26, 0.12);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.12);
 }
 .chip-green {
   border-color: rgba(52, 211, 153, 0.4);
@@ -165,9 +165,9 @@ body {
   background: rgba(52, 211, 153, 0.1);
 }
 .chip-blue {
-  border-color: rgba(56, 189, 248, 0.4);
-  color: #7dd3fc;
-  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(45, 212, 191, 0.4);
+  color: #5eead4;
+  background: rgba(45, 212, 191, 0.1);
 }
 .chip-yellow {
   border-color: rgba(251, 191, 36, 0.4);
@@ -176,7 +176,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(120deg, #ffd7b0 0%, #ff8f3c 45%, #ff6a1a 100%);
+  background: linear-gradient(120deg, #d1fae5 0%, #4ade80 45%, #16a34a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -203,7 +203,7 @@ body {
 }
 
 .code-window {
-  background: #07090d;
+  background: #060a08;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 14px;
   overflow: hidden;
@@ -219,12 +219,13 @@ body {
 }
 .code-scroll::-webkit-scrollbar-thumb,
 .thin-scroll::-webkit-scrollbar-thumb {
-  background: #263041;
+  background: #1e3a2a;
   border-radius: 999px;
-  border: 2px solid #07090d;
+  border: 2px solid #060a08;
 }
-.code-scroll::-webkit-scrollbar-track {
-  background: #0b0f14;
+.code-scroll::-webkit-scrollbar-track,
+.thin-scroll::-webkit-scrollbar-track {
+  background: #0a100c;
 }
 
 pre.code {
@@ -268,7 +269,7 @@ details.faq[open] .faq-icon {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #10141b 25%, #171d27 37%, #10141b 63%);
+  background: linear-gradient(90deg, #0b110d 25%, #142018 37%, #0b110d 63%);
   background-size: 400% 100%;
   animation: skeleton 1.4s ease infinite;
   border-radius: 10px;
@@ -283,7 +284,7 @@ details.faq[open] .faq-icon {
 }
 
 ::selection {
-  background: rgba(255, 106, 26, 0.35);
+  background: rgba(34, 197, 94, 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,19 @@
+# dependências
+node_modules/
+
+# builds
+.next/
+out/
+*.tsbuildinfo
+
+# ambiente (nunca versionar credenciais)
+.env
+.env.*
+!.env.example
+
+# modo local (dados de desenvolvimento)
+data/
+
+# diversos
+.DS_Store
+npm-debug.log*

@@ -38,16 +38,16 @@ export function formatDate(input: Date | string | undefined) {
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-/** Gradientes determinísticos para as capas dos scripts (sem depender de imagens externas) */
+/** Gradientes determinísticos para as capas dos scripts (verde + preto profundo) */
 const ACCENTS: Record<string, [string, string, string]> = {
-  orange: ["#ff6a1a", "#ff9d00", "#2b1206"],
-  violet: ["#7c5cff", "#c026d3", "#170b2b"],
-  cyan: ["#22d3ee", "#2563eb", "#04222b"],
-  lime: ["#a3e635", "#16a34a", "#0d2410"],
-  rose: ["#fb7185", "#e11d48", "#2a0713"],
-  amber: ["#fbbf24", "#f97316", "#2a1a04"],
-  sky: ["#38bdf8", "#6366f1", "#08172e"],
-  emerald: ["#34d399", "#0ea5e9", "#04231f"],
+  emerald: ["#34d399", "#059669", "#03231b"],
+  jade: ["#2dd4bf", "#0d9488", "#032726"],
+  lime: ["#a3e635", "#4d7c0f", "#12200a"],
+  mint: ["#6ee7b7", "#14b8a6", "#032f2a"],
+  forest: ["#4ade80", "#166534", "#04231a"],
+  neon: ["#bbf7d0", "#22c55e", "#064e3b"],
+  teal: ["#5eead4", "#0f766e", "#042f2e"],
+  onyx: ["#86efac", "#15803d", "#052e1c"],
 };
 
 export const ACCENT_KEYS = Object.keys(ACCENTS);

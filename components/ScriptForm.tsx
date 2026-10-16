@@ -205,7 +205,7 @@ export default function ScriptForm({
           <label className="flex items-end gap-2 pb-2 text-[13px] text-slate-300">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-[#ff6a1a]"
+              className="h-4 w-4 accent-[#22c55e]"
               checked={form.keySystem}
               onChange={(e) => setForm({ ...form, keySystem: e.target.checked })}
             />

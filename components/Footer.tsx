@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="flex items-center gap-2.5">
             <span
               className="grid h-8 w-8 place-items-center rounded-lg text-[13px] font-black text-white"
-              style={{ background: "linear-gradient(135deg,#ff8f3c,#e5540d)" }}
+              style={{ background: "linear-gradient(135deg,#4ade80,#15803d)" }}
             >
               K
             </span>

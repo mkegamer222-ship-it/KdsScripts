@@ -98,7 +98,10 @@ if (raw.startsWith("mongodb+srv://")) {
 
 console.log("\n4) Autenticação");
 if (!raw) {
-  bad("sem URI — pulando");
+  warn("sem MONGODB_URI — o site roda em MODO LOCAL (dados em data/local-db.json).");
+  console.log("   Defina MONGODB_URI para usar o MongoDB (Atlas) em produção.\n");
+  process.exitCode = 0;
+  process.exit(0);
 } else {
   const client = new MongoClient(raw, { serverSelectionTimeoutMS: 15000 });
   try {

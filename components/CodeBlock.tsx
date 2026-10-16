@@ -154,7 +154,7 @@ export default function CodeBlock({
   }
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0b0e13] px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0a110c] px-3 py-2">
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -196,7 +196,7 @@ export default function CodeBlock({
         {!expanded && lines.length > 22 && (
           <button
             onClick={() => setExpanded(true)}
-            className="w-full border-t border-white/8 bg-[#0b0e13] py-2.5 text-[12.5px] font-semibold text-slate-400 transition hover:bg-white/5 hover:text-brand-300"
+            className="w-full border-t border-white/8 bg-[#0a110c] py-2.5 text-[12.5px] font-semibold text-slate-400 transition hover:bg-white/5 hover:text-brand-300"
           >
             ⌄ Mostrar o código completo ({lines.length} linhas)
           </button>

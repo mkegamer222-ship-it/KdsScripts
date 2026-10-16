@@ -86,7 +86,7 @@ export default function HeroSearch() {
         </div>
 
         {open && items.length > 0 && (
-          <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0b0e13] shadow-2xl">
+          <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0a110c] shadow-2xl">
             {items.map((s) => (
               <button
                 key={s.slug}

@@ -56,11 +56,11 @@ export default function FilterBar({ total = 0 }: { total?: number }) {
           onChange={(e) => push({ placeId: e.target.value })}
           className="input sm:w-[220px]"
         >
-          <option value="" style={{ background: "#0b0e13" }}>
+          <option value="" style={{ background: "#0a110c" }}>
             Todos os jogos
           </option>
           {games.map((g) => (
-            <option key={g.placeId} value={g.placeId} style={{ background: "#0b0e13" }}>
+            <option key={g.placeId} value={g.placeId} style={{ background: "#0a110c" }}>
               {g.name}
             </option>
           ))}
@@ -71,7 +71,7 @@ export default function FilterBar({ total = 0 }: { total?: number }) {
           className="input sm:w-[170px]"
         >
           {SORTS.map((s) => (
-            <option key={s.value} value={s.value} style={{ background: "#0b0e13" }}>
+            <option key={s.value} value={s.value} style={{ background: "#0a110c" }}>
               {s.label}
             </option>
           ))}

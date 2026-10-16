@@ -1,4 +1,5 @@
 import { MongoClient, Db } from "mongodb";
+import { getLocalDb } from "./local-store";
 
 /**
  * Conexão com o MongoDB reaproveitada entre invocações + CIRCUIT BREAKER.
@@ -21,6 +22,17 @@ const DB_NAME = process.env.MONGODB_DB || "kdss";
 const SERVER_SELECTION_MS = Number(process.env.MONGODB_TIMEOUT_MS || 2500);
 /** Quanto tempo o circuito fica aberto (sem tentar conectar) depois de uma falha */
 const COOLDOWN_MS = Number(process.env.MONGODB_COOLDOWN_MS || 60_000);
+
+/**
+ * Existe alguma configuração de Mongo? Sem nada disso o site roda em
+ * MODO LOCAL: os dados ficam no arquivo `data/local-db.json` (sem banco).
+ */
+export function mongoConfigured(): boolean {
+  if (process.env.MONGODB_URI?.trim()) return true;
+  if (process.env.MONGODB_HOSTS?.trim()) return true;
+  if (process.env.MONGODB_HOST?.trim()) return true;
+  return false;
+}
 
 function buildUri(): string {
   const direct = process.env.MONGODB_URI?.trim();
@@ -47,7 +59,8 @@ function buildUri(): string {
   }
 
   throw new Error(
-    "MongoDB não configurado: defina MONGODB_URI (ou USERNAME/PASSWORD/HOST) nas variáveis de ambiente.",
+    "MongoDB não configurado: defina MONGODB_URI (ou USERNAME/PASSWORD/HOST) nas variáveis de ambiente. " +
+      "Sem configuração o site roda em modo local (data/local-db.json).",
   );
 }
 
@@ -177,6 +190,11 @@ async function ensureIndexes(db: Db) {
 }
 
 export async function getDb(): Promise<Db> {
+  // Sem configuração de Mongo → modo local (arquivo), contados e site funcionais.
+  if (!mongoConfigured()) {
+    return getLocalDb() as unknown as Db;
+  }
+
   const client = await getClient();
   const db = client.db(DB_NAME);
   if (!indexesReady) {
@@ -208,7 +226,7 @@ export async function withDb<T>(fn: (db: Db) => Promise<T>, fallback: T): Promis
 export type HealthInfo = {
   ok: boolean;
   db: string;
-  mode: "srv" | "uri" | "hosts" | "ausente";
+  mode: "srv" | "uri" | "hosts" | "local" | "ausente";
   latencyMs?: number;
   scripts?: number;
   error?: string;
@@ -217,6 +235,7 @@ export type HealthInfo = {
 };
 
 function modeOf(): HealthInfo["mode"] {
+  if (!mongoConfigured()) return "local";
   if (process.env.MONGODB_URI?.includes("+srv")) return "srv";
   if (process.env.MONGODB_URI) return "uri";
   if (process.env.MONGODB_HOSTS) return "hosts";
@@ -271,6 +290,11 @@ export async function pingDb(force = false): Promise<HealthInfo> {
 export async function diagnose() {
   const info = await pingDb(true);
   const extra: Record<string, string> = {};
+
+  if (!mongoConfigured()) {
+    extra.modo = "local (sem banco): dados em data/local-db.json";
+    return { ...info, extra };
+  }
 
   try {
     const uri = buildUri();

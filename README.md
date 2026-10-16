@@ -11,16 +11,23 @@ Banco de dados **MongoDB**. Pronto para deploy na Vercel.
 ```bash
 npm install
 cp .env.example .env.local     # preencha MONGODB_URI, STAFF_USERNAME e STAFF_PASSWORD
-npm run check                  # testa a conexão com o banco
+npm run check                  # testa a conexão com o banco (ou o modo local)
 npm run dev                    # http://localhost:3000
 ```
 
 A primeira requisição cria os índices e a **conta de staff** definida em `STAFF_USERNAME` /
 `STAFF_PASSWORD`. Entre por `/entrar` e o painel fica em `/staff`.
 
-Sem banco configurado o site abre, mas vazio: os indicadores ficam em zero e as páginas
-mostram estado de "nada publicado". O arquivo `.env.local` não vem preenchido no pacote —
-copie o `.env.example` e coloque as suas credenciais.
+**Dois modos de armazenamento:**
+
+- **MongoDB** (recomendado, produção): defina `MONGODB_URI`. Com o banco fora do ar, o site
+  continua abrindo (circuit breaker + fallback em cache).
+- **Modo local** (desenvolvimento): sem `MONGODB_URI` (e sem `MONGODB_HOSTS`/`MONGODB_HOST`),
+  o site guarda tudo no arquivo `data/local-db.json` — contas, sessões, scripts e jogos
+  funcionam sem banco nenhum. As senhas de staff continuam em `STAFF_USERNAME`/`STAFF_PASSWORD`.
+
+O arquivo `.env.local` não vem preenchido no pacote — copie o `.env.example` e coloque as
+suas credenciais (ou rode sem `MONGODB_URI` para o modo local).
 
 ---
 
@@ -138,7 +145,7 @@ Usados pela interface. Nenhum deles aparece listado nas páginas públicas.
 | POST | `/api/auth/register` · `/api/auth/login` · `/api/auth/logout` · `/api/auth/password` | sessão em cookie |
 | GET | `/api/me` | usuário da sessão |
 | GET | `/api/scripts` · `/api/scripts/[slug]` | somente conteúdo publicado |
-| POST | `/api/scripts/[slug]/view` · `/like` | contadores |
+| POST | `/api/scripts/[slug]/view` · `/like` · `/copy` | contadores |
 | GET | `/api/game?placeId=` | nome e capa do jogo |
 | GET | `/api/games` | jogos validados |
 | POST | `/api/submit` | publicar script (exige sessão) |

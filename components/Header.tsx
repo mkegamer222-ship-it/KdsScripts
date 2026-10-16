@@ -83,12 +83,12 @@ export default function Header() {
   const staff = user ? isStaff(user.role) : false;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/8 bg-[#07080b]/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/8 bg-[#050807]/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-[1240px] items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
           <span
             className="grid h-9 w-9 place-items-center rounded-xl text-[15px] font-black text-white"
-            style={{ background: "linear-gradient(135deg,#ff8f3c,#e5540d)" }}
+            style={{ background: "linear-gradient(135deg,#4ade80,#15803d)" }}
           >
             K
           </span>
@@ -151,7 +151,7 @@ export default function Header() {
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#0b0e13] py-1 shadow-2xl">
+                <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#0a110c] py-1 shadow-2xl">
                   <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-slate-500">
                     {user.role === "owner" ? "Dono" : user.role === "staff" ? "Staff" : "Membro"}
                   </div>
@@ -199,7 +199,7 @@ export default function Header() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-white/8 bg-[#0a0c11] px-4 py-4 lg:hidden">
+        <div className="border-t border-white/8 bg-[#080d0a] px-4 py-4 lg:hidden">
           <SearchBox className="mb-3 md:hidden" />
           <div className="grid grid-cols-2 gap-2">
             {NAV.map((item) => (
