@@ -2,7 +2,7 @@ import type { GameStatus, ScriptStatus } from "./config";
 import type { Role } from "./permissions";
 
 export type ScriptDoc = {
-  _id?: any;
+  _id?: string;
   slug: string;
   title: string;
   description: string;
@@ -36,7 +36,7 @@ export type ScriptDoc = {
 export type ScriptListItem = Omit<ScriptDoc, "code"> & { codeLength?: number };
 
 export type GameDoc = {
-  _id?: any;
+  _id?: string;
   placeId: number;
   name: string;
   universeId?: number | null;

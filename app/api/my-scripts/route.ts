@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 import { getCurrentUser, isStaff } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mysql";
 import { bustDataCache } from "@/lib/data";
 import { parseList } from "@/lib/actions-helpers";
 

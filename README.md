@@ -2,7 +2,7 @@
 
 Site de scripts para jogos do Roblox com **contas de usuário**, **envio de scripts pela
 comunidade** e **catálogo de jogos identificado por Place ID**, validado pela staff.
-Banco de dados **MongoDB**. Pronto para deploy na Vercel.
+O banco de produção é **MySQL**, acessado pelo driver `mysql2`.
 
 ---
 
@@ -10,32 +10,39 @@ Banco de dados **MongoDB**. Pronto para deploy na Vercel.
 
 ```bash
 npm install
-npm run check                  # testa a conexão com o banco (ou o modo local)
+npm run check                  # testa a conexão MySQL (ou o modo local)
 npm run dev                    # http://localhost:3000
 ```
 
-As credenciais ficam no **`.env` da raiz (versionado a pedido do dono — mantenha o
-repositório PRIVADO)**. Sem `.env`, copie `.env.example` e preencha `MONGODB_URI`,
-`STAFF_USERNAME` e `STAFF_PASSWORD`. ⚠️ Se trocar a senha do Mongo no Atlas, atualize
-a `MONGODB_URI` aqui **e** nas variáveis da hospedagem (Vercel), senão volta o erro
-"Não foi possível entrar / criar a conta".
+Para desenvolvimento, copie `.env.example` para `.env.local` e preencha as variáveis
+`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER` e `MYSQL_PASSWORD`, além de
+`STAFF_USERNAME` e `STAFF_PASSWORD`. Não coloque credenciais reais no `.env.example`.
 
-A primeira requisição cria os índices e a **conta de staff** definida em `STAFF_USERNAME` /
-`STAFF_PASSWORD`, e ressincroniza a senha dela com o `.env` a cada boot (trocar a senha
-pelo site é sobrescrito no restart se o `.env` estiver diferente — troque no `.env`).
-Entre por `/entrar` e o painel fica em `/staff`.
+⚠️ O arquivo `.env` da raiz já é versionado neste repositório e contém credenciais:
+conserve o repositório privado. Em produção, prefira cadastrar as variáveis diretamente
+no painel da hospedagem; nunca copie senhas para o `.env.example`.
+
+A primeira requisição cria as tabelas e a **conta de staff** definida em
+`STAFF_USERNAME` / `STAFF_PASSWORD`. A senha dessa conta é sincronizada com o ambiente
+a cada boot. Entre por `/entrar`; o painel fica em `/staff`.
 
 **Dois modos de armazenamento:**
 
-- **MongoDB** (recomendado, produção): defina `MONGODB_URI`. Com o banco fora do ar, o site
-  continua abrindo (circuit breaker + fallback em cache).
-- **Modo local** (desenvolvimento): sem `MONGODB_URI` (e sem `MONGODB_HOSTS`/`MONGODB_HOST`),
-  o site guarda tudo no arquivo `data/local-db.json` — contas, sessões, scripts e jogos
-  funcionam sem banco nenhum. As senhas de staff continuam em `STAFF_USERNAME`/`STAFF_PASSWORD`.
+- **MySQL**: quando as variáveis `MYSQL_*` obrigatórias estão configuradas, o app cria
+  automaticamente as tabelas `users`, `sessions`, `scripts` e `games`.
+- **Modo local**: sem configuração MySQL, os dados ficam em `data/local-db.json`. É útil
+  para desenvolvimento, mas não substitui um banco persistente em produção.
 
-O `.env` da raiz já vem preenchido e versionado (a pedido do dono). Na Vercel, cadastre
-as **mesmas** variáveis em *Settings → Environment Variables* — a Vercel não lê o `.env`
-do Git. Sem `MONGODB_URI`, o site roda em modo local (`data/local-db.json`).
+> **Compatibilidade de hospedagem:** o projeto é Next.js/Node.js. O InfinityFree oferece
+> hospedagem PHP e pode restringir conexões MySQL remotas; portanto, o app hospedado na
+> Vercel ou em outro provedor pode não conseguir acessar esse banco. Rode `npm run check`
+> no mesmo ambiente do deploy. Se a conexão remota for bloqueada, use um MySQL que aceite
+> conexões da hospedagem do Next.js ou um backend intermediário permitido pelo provedor.
+> O InfinityFree não executa diretamente este app Next.js/Node.js.
+
+A troca de MongoDB para MySQL não importa automaticamente os dados antigos. As tabelas
+MySQL começam vazias; a conta de staff é criada no primeiro acesso e os usuários/scripts
+anteriores precisam ser migrados separadamente, caso devam ser preservados.
 
 ---
 
@@ -44,8 +51,8 @@ do Git. Sem `MONGODB_URI`, o site roda em modo local (`data/local-db.json`).
 **Contas e sessões**
 
 - Cadastro com usuário + senha (senha com hash `scrypt` e salt por usuário).
-- Sessões persistidas no banco (`sessions`, com índice TTL) e cookie `httpOnly`
-  (`sameSite=lax`, `secure` em produção), válido por 30 dias.
+- Sessões persistidas no banco (`sessions`) e cookie `httpOnly` (`sameSite=lax`, `secure`
+  em produção), válido por 30 dias.
 - Troca de senha pelo site; ao trocar, as outras sessões são encerradas.
 - Limite de tentativas nas rotas de login, cadastro, senha, envio e sugestão.
 
@@ -88,30 +95,34 @@ O site começa **vazio**: sem scripts, sem jogos e sem categorias pré-cadastrad
 
 ---
 
-## Deploy na Vercel
+## Deploy na Vercel (ou hospedagem Node.js)
 
-1. Suba o projeto para um repositório Git.
-2. Importe na Vercel (framework Next.js detectado automaticamente).
-3. Em **Settings → Environment Variables**, defina:
+1. Importe o projeto em uma hospedagem compatível com Next.js.
+2. Em **Environment Variables**, configure as credenciais e as opções do site:
 
 ```env
-MONGODB_URI="mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/?retryWrites=true&w=majority"
-MONGODB_DB="kdss"
+MYSQL_HOST="sql311.infinityfree.com"
+MYSQL_PORT="3306"
+MYSQL_DATABASE="SEU_BANCO"
+MYSQL_USER="SEU_USUARIO"
+MYSQL_PASSWORD="SUA_SENHA"
+MYSQL_CONNECTION_LIMIT="2"
 STAFF_USERNAME="kdss"
 STAFF_PASSWORD="troque-esta-senha"
 NEXT_PUBLIC_SITE_URL="https://seu-dominio"
 ```
 
-4. Deploy. A conta de staff é criada na primeira visita ao site.
-5. Entre em `/entrar` com `STAFF_USERNAME` / `STAFF_PASSWORD` e troque a senha em
-   **Minha conta → Trocar senha**.
+3. Execute `npm run check` no ambiente de hospedagem para validar acesso e autenticação.
+   As tabelas são criadas automaticamente quando o app inicia pela primeira vez.
+4. A conta de staff é criada na primeira visita ao site. Entre em `/entrar` e troque a
+   senha em **Minha conta → Trocar senha**.
 
-**No MongoDB Atlas:** em *Security → Network Access*, libere `0.0.0.0/0`. Na Vercel a
-execução é serverless e o IP muda a cada requisição.
+**Atenção ao InfinityFree:** confirme no painel/documentação se sua conta permite que a
+hospedagem do app abra conexões MySQL externas. Se a porta 3306 estiver acessível apenas
+para sites PHP hospedados dentro do InfinityFree, a Vercel não conseguirá conectar.
 
-Datas e textos ficam em `lib/config.ts`. Nada de configuração de infraestrutura aparece
-nas páginas públicas: as páginas do site não exibem rotas de API, nome de hospedagem nem
-variáveis de ambiente.
+Datas e textos ficam em `lib/config.ts`. Nenhuma configuração de infraestrutura aparece
+nas páginas públicas do site.
 
 ---
 
@@ -131,9 +142,10 @@ components/
   Header, Footer, AuthProvider, ScriptCard, ScriptForm, CodeBlock,
   FilterBar, Pagination, staff/*
 lib/
-  mongodb.ts      conexão, circuit breaker e diagnóstico
+  mysql.ts        pool MySQL, esquema SQL, consultas e circuit breaker
+  local-store.ts  armazenamento JSON local para desenvolvimento
   auth.ts         senhas, sessões, cadastro e login
-  bootstrap.ts    índices + criação da conta de staff
+  bootstrap.ts    preparação do banco + conta de staff
   data.ts         consultas de scripts, jogos, contas e estatísticas (com cache)
   roblox.ts       Place ID → jogo (nome, criador, capa)
   permissions.ts  regras de cargo (usado no servidor e no cliente)
@@ -165,11 +177,9 @@ Usados pela interface. Nenhum deles aparece listado nas páginas públicas.
 
 ## Desempenho
 
-O site não depende de o banco responder para carregar:
-
-- **Circuit breaker** (`lib/mongodb.ts`): a conexão espera no máximo `MONGODB_TIMEOUT_MS`
-  (2,5 s por padrão); se falhar, o circuito abre e as chamadas seguintes falham na hora por
-  `MONGODB_COOLDOWN_MS` (60 s), com tentativa automática depois.
+- **Pool MySQL** (`lib/mysql.ts`): pool pequeno reaproveitado entre requisições, timeout de
+  conexão configurável e circuit breaker para evitar que o site fique esperando quando o
+  banco estiver indisponível.
 - **Cache em memória** com TTL curto, *stale-while-revalidate* e deduplicação de consultas.
 - **ISR** nas páginas públicas (30 s na home e nas páginas de script, 60 s em jogos).
 - **Cache-Control** nas rotas internas de leitura.

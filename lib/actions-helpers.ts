@@ -1,5 +1,5 @@
 import { getGameByPlaceId, isValidPlaceId } from "./roblox";
-import { getDb } from "./mongodb";
+import { getDb } from "./mysql";
 import { bustDataCache } from "./data";
 import { slugify } from "./utils";
 import type { GameDoc } from "./types";

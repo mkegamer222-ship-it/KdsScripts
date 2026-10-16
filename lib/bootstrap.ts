@@ -1,4 +1,4 @@
-import { getDb } from "./mongodb";
+import { getDb } from "./mysql";
 import { hashPassword, normalizeUsername, verifyPassword, type UserDoc } from "./auth";
 
 /**

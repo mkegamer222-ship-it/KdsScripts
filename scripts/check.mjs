@@ -1,147 +1,127 @@
 /**
- * Diagnóstico da conexão com o MongoDB.
+ * Diagnóstico da conexão com MySQL.
  *   npm run check
  *
- * Testa, em ordem: variáveis de ambiente → DNS/SRV → TLS → autenticação,
- * e diz exatamente o que corrigir.
+ * Lê as variáveis MYSQL_*, testa a conexão e informa se as tabelas já existem.
+ * As tabelas são criadas automaticamente pelo app na primeira inicialização.
  */
 import { readFileSync, existsSync } from "node:fs";
-import dns from "node:dns/promises";
-import tls from "node:tls";
-import { MongoClient } from "mongodb";
+import { createConnection } from "mysql2/promise";
 
 function loadEnv() {
-  // Mesma precedência do Next.js: process.env real > .env.local > .env.
-  // Valor vazio em .env.local conta como DEFINIDO (desativa a variável),
-  // como no @next/env — antes o !process.env[k] deixava o .env sobrescrever.
-  const deArquivo = new Set();
-  for (const file of [".env", ".env.local"]) {
+  // Ambiente do processo > .env.local > .env.
+  for (const file of [".env.local", ".env"]) {
     if (!existsSync(file)) continue;
     for (const line of readFileSync(file, "utf8").split("\n")) {
-      const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^["']|["']$/g, "");
-      if (deArquivo.has(m[1]) || !(m[1] in process.env)) {
-        process.env[m[1]] = v;
-        deArquivo.add(m[1]);
-      }
+      const match = line.match(/^\s*(?:export\s+)?([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (!match || match[1] in process.env) continue;
+      process.env[match[1]] = match[2].replace(/^["']|["']$/g, "");
     }
   }
 }
 loadEnv();
 
-const ok = (m) => console.log("  \x1b[32m✔\x1b[0m " + m);
-const bad = (m) => console.log("  \x1b[31m✘\x1b[0m " + m);
-const warn = (m) => console.log("  \x1b[33m!\x1b[0m " + m);
+const ok = (message) => console.log("  \x1b[32m✔\x1b[0m " + message);
+const bad = (message) => console.log("  \x1b[31m✘\x1b[0m " + message);
+const warn = (message) => console.log("  \x1b[33m!\x1b[0m " + message);
 
-// Mesma limpeza de lib/mongodb.ts: tira colchetes / "](mailto:...)" da URI colada.
-const raw = (process.env.MONGODB_URI || "").replace(/\]\([^)]*\)/g, "").replace(/[\[\]]/g, "").trim();
-const dbName = process.env.MONGODB_DB || "kdss";
+const required = ["MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD"];
+const missing = required.filter((key) => !process.env[key]?.trim());
 
-console.log("\n=== KDS Scripts · diagnóstico do banco ===\n");
-
+console.log("\n=== KDS Scripts · diagnóstico MySQL ===\n");
 console.log("1) Variáveis de ambiente");
-if (raw) {
-  ok("MONGODB_URI definida: " + raw.replace(/:\/\/([^:]+):([^@]+)@/, "://$1:***@"));
-  if (raw.startsWith("mongodb+srv://")) ok("modo SRV");
-  else warn("URI sem +srv — normal se for banco local");
-} else {
-  bad("MONGODB_URI não definida (copie .env.example para .env.local)");
+
+if (missing.length === required.length) {
+  warn("MySQL não configurado; o site está em modo local (data/local-db.json).");
+  console.log("   Defina MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE, MYSQL_USER e MYSQL_PASSWORD para usar MySQL.\n");
+  process.exit(0);
 }
-console.log("   banco: " + dbName);
+
+if (missing.length) {
+  bad("Configuração incompleta. Variáveis ausentes: " + missing.join(", "));
+  process.exit(1);
+}
+
+const host = process.env.MYSQL_HOST.trim();
+const port = Number(process.env.MYSQL_PORT || 3306);
+const database = process.env.MYSQL_DATABASE.trim();
+const user = process.env.MYSQL_USER.trim();
+const password = process.env.MYSQL_PASSWORD;
+const connectTimeout = Math.max(1_000, Number(process.env.MYSQL_CONNECT_TIMEOUT_MS || 8_000));
+
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  bad("MYSQL_PORT precisa ser um número entre 1 e 65535.");
+  process.exit(1);
+}
+
+ok(`host: ${host}:${port}`);
+ok(`banco: ${database}`);
+ok("usuário e senha definidos (os valores da senha não são exibidos)");
 console.log(
-  "   conta de staff: " +
+  "   conta inicial de staff: " +
     (process.env.STAFF_USERNAME
-      ? process.env.STAFF_USERNAME + (process.env.STAFF_PASSWORD ? " (senha definida)" : " (SEM SENHA)")
+      ? `${process.env.STAFF_USERNAME}${process.env.STAFF_PASSWORD ? " (senha definida)" : " (SEM SENHA)"}`
       : "não definida — nenhuma conta de staff será criada"),
 );
 
-let hosts = [];
-if (raw.startsWith("mongodb+srv://")) {
-  const host = raw.split("@")[1]?.split("/")[0]?.split("?")[0];
-  console.log("\n2) DNS");
-  try {
-    const srv = await dns.resolveSrv(`_mongodb._tcp.${host}`);
-    hosts = srv.map((s) => ({ name: s.name, port: s.port }));
-    ok(`SRV ok — ${srv.length} hosts`);
-    for (const s of srv) {
-      try {
-        const [ip] = await dns.resolve4(s.name);
-        ok(`  ${s.name} → ${ip}`);
-      } catch (e) {
-        bad(`  ${s.name} não resolveu (${e.code})`);
+console.log("\n2) Conexão e autenticação");
+let connection;
+try {
+  connection = await createConnection({
+    host,
+    port,
+    database,
+    user,
+    password,
+    connectTimeout,
+    timezone: "Z",
+    charset: "utf8mb4",
+  });
+  await connection.ping();
+  ok("conectado e autenticado");
+
+  const [tableRows] = await connection.query(
+    "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME IN ('users', 'sessions', 'scripts', 'games')",
+    [database],
+  );
+  const tables = new Set(tableRows.map((row) => row.TABLE_NAME));
+  if (tables.size === 0) {
+    warn("As tabelas ainda não existem; o app vai criá-las no primeiro acesso.");
+  } else {
+    ok(`tabelas encontradas: ${[...tables].join(", ")}`);
+    for (const table of ["users", "sessions", "scripts", "games"]) {
+      if (!tables.has(table)) {
+        console.log(`   ${table}: ainda não criada`);
+        continue;
       }
+      const [rows] = await connection.query(`SELECT COUNT(*) AS total FROM \`${table}\``);
+      console.log(`   ${table}: ${Number(rows[0]?.total || 0)} registro(s)`);
     }
-  } catch (e) {
-    bad(`SRV falhou para ${host}: ${e.code}`);
-    if (e.code === "ENOTFOUND") {
-      warn("O hostname do cluster pode ter mudado ou o cluster está pausado.");
-    }
-  }
 
-  if (hosts[0]) {
-    console.log("\n3) TLS");
-    await new Promise((resolve) => {
-      const so = tls.connect(
-        { host: hosts[0].name, port: hosts[0].port, servername: hosts[0].name, timeout: 12000 },
-        () => {
-          ok("handshake TLS ok");
-          so.end();
-          resolve();
-        },
+    if (tables.has("users")) {
+      const [owners] = await connection.query(
+        "SELECT displayName, username FROM `users` WHERE role = 'owner' LIMIT 1",
       );
-      so.on("error", (e) => {
-        bad("TLS falhou: " + e.message);
-        warn("No Atlas, verifique Security → Network Access.");
-        resolve();
-      });
-      so.on("timeout", () => {
-        bad("timeout no TLS");
-        so.destroy();
-        resolve();
-      });
-    });
+      if (owners[0]) ok(`conta de staff encontrada: ${owners[0].displayName || owners[0].username}`);
+      else warn("Nenhuma conta de staff; ela será criada no primeiro boot do site.");
+    }
   }
-}
+} catch (error) {
+  const code = error?.code || "";
+  let message = String(error?.message || error);
+  if (password) message = message.split(password).join("[oculto]");
+  bad(`${code ? `${code}: ` : ""}${message.slice(0, 220)}`);
 
-console.log("\n4) Autenticação");
-if (!raw) {
-  warn("sem MONGODB_URI — o site roda em MODO LOCAL (dados em data/local-db.json).");
-  console.log("   Defina MONGODB_URI para usar o MongoDB (Atlas) em produção.\n");
-  process.exitCode = 0;
-  process.exit(0);
-} else {
-  const client = new MongoClient(raw, { serverSelectionTimeoutMS: 15000 });
-  try {
-    const t0 = Date.now();
-    await client.connect();
-    const db = client.db(dbName);
-    await db.command({ ping: 1 });
-    ok(`conectado e autenticado em ${Date.now() - t0}ms`);
-    for (const col of ["users", "scripts", "games", "sessions"]) {
-      const n = await db.collection(col).countDocuments();
-      console.log(`   ${col}: ${n} documento(s)`);
-    }
-    const owner = await db.collection("users").findOne({ role: "owner" });
-    if (owner) ok(`conta de staff ativa: ${owner.displayName || owner.username}`);
-    else warn("Nenhuma conta de staff ainda — ela é criada no primeiro boot do site.");
-  } catch (e) {
-    const msg = String(e.message);
-    bad(msg.slice(0, 200));
-    if (/bad auth/i.test(msg)) {
-      console.log("\n  \x1b[33mCOMO RESOLVER 'bad auth' →\x1b[0m");
-      console.log("   1. Atlas → Database Access → edite o usuário → Edit Password → Autogenerate.");
-      console.log("      Atualize MONGODB_URI no .env.local E nas variáveis da hospedagem.");
-      console.log("   2. Confira se o usuário é exatamente o que aparece no Atlas.");
-      console.log("   3. Se a senha tiver @ : / ? # & % — use encodeURIComponent nela.");
-    } else if (/timed out|ETIMEDOUT|querySrv|alert internal error/i.test(msg)) {
-      console.log("\n  \x1b[33mCOMO RESOLVER timeout/acesso →\x1b[0m");
-      console.log("   Atlas → Security → Network Access → Add IP → 0.0.0.0/0 (Allow from anywhere).");
-    }
-  } finally {
-    await client.close().catch(() => {});
+  if (code === "ER_ACCESS_DENIED_ERROR") {
+    console.log("\n  Confira MYSQL_USER, MYSQL_PASSWORD e se o usuário tem acesso ao banco informado.");
+  } else if (code === "ER_BAD_DB_ERROR") {
+    console.log("\n  Confira MYSQL_DATABASE e crie o banco no painel do provedor, se necessário.");
+  } else if (["ETIMEDOUT", "ECONNREFUSED", "EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND"].includes(code)) {
+    console.log("\n  O host/porta não está acessível. Alguns provedores gratuitos bloqueiam conexões MySQL externas; teste a partir da hospedagem onde o app vai rodar.");
   }
+  process.exitCode = 1;
+} finally {
+  await connection?.end().catch(() => {});
 }
 
 console.log("\n=== fim do diagnóstico ===\n");
-process.exitCode = 0;

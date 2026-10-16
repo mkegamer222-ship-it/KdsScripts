@@ -1,4 +1,4 @@
-import { getDb } from "./mongodb";
+import { getDb } from "./mysql";
 import { ensureBootstrap } from "./bootstrap";
 import type { GameDoc, GameListItem, ListResult, PublicUser, ScriptDoc, ScriptListItem } from "./types";
 import type { ScriptStatus } from "./config";

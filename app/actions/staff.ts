@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ObjectId } from "mongodb";
 import { getCurrentUser, isOwner, isStaff } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mysql";
 import { bustDataCache } from "@/lib/data";
 import { upsertGameFromPlaceId } from "@/lib/actions-helpers";
 import { isValidPlaceId } from "@/lib/roblox";
@@ -175,7 +174,7 @@ export async function setUserRoleAction(formData: FormData) {
 
   try {
     const db = await getDb();
-    const target = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+    const target = await db.collection("users").findOne({ _id: userId });
     if (!target) return;
     // não rebaixa o último owner
     if (target.role === "owner" && role !== "owner") {
@@ -183,7 +182,7 @@ export async function setUserRoleAction(formData: FormData) {
       if (owners <= 1) return;
     }
 
-    await db.collection("users").updateOne({ _id: new ObjectId(userId) }, { $set: { role } });
+    await db.collection("users").updateOne({ _id: userId }, { $set: { role } });
     bustDataCache();
   } catch {
     /* silencioso */
@@ -200,12 +199,12 @@ export async function toggleUserBanAction(formData: FormData) {
 
   try {
     const db = await getDb();
-    const target = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+    const target = await db.collection("users").findOne({ _id: userId });
     if (!target || target.role === "owner") return;
 
     await db
       .collection("users")
-      .updateOne({ _id: new ObjectId(userId) }, { $set: { banned: !target.banned } });
+      .updateOne({ _id: userId }, { $set: { banned: !target.banned } });
     bustDataCache();
   } catch {
     /* silencioso */
