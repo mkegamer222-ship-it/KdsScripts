@@ -11,13 +11,20 @@ import tls from "node:tls";
 import { MongoClient } from "mongodb";
 
 function loadEnv() {
-  for (const file of [".env.local", ".env"]) {
+  // Mesma precedência do Next.js: process.env real > .env.local > .env.
+  // Valor vazio em .env.local conta como DEFINIDO (desativa a variável),
+  // como no @next/env — antes o !process.env[k] deixava o .env sobrescrever.
+  const deArquivo = new Set();
+  for (const file of [".env", ".env.local"]) {
     if (!existsSync(file)) continue;
     for (const line of readFileSync(file, "utf8").split("\n")) {
       const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$/);
       if (!m) continue;
       const v = m[2].trim().replace(/^["']|["']$/g, "");
-      if (!process.env[m[1]]) process.env[m[1]] = v;
+      if (deArquivo.has(m[1]) || !(m[1] in process.env)) {
+        process.env[m[1]] = v;
+        deArquivo.add(m[1]);
+      }
     }
   }
 }
