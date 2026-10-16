@@ -41,7 +41,7 @@ export default function StaffScriptRow({ script }: { script: ScriptDoc }) {
       </div>
 
       {openCode && (
-        <pre className="code mt-3 max-h-80 overflow-auto rounded-xl border border-white/8 bg-[#07090d]">
+        <pre className="code mt-3 max-h-80 overflow-auto rounded-xl border border-white/8 bg-[#060a08]">
           {script.code}
         </pre>
       )}
