@@ -6,9 +6,12 @@ node_modules/
 out/
 *.tsbuildinfo
 
-# ambiente (nunca versionar credenciais)
-.env
-.env.*
+# ambiente
+# ⚠️ A pedido do dono, o `.env` DA RAIZ é versionado (contém credenciais).
+#    Mantenha o repositório PRIVADO. Os demais arquivos de ambiente
+#    (.env.local etc.) continuam fora do Git.
+.env.local
+.env.*.local
 !.env.example
 
 # modo local (dados de desenvolvimento)

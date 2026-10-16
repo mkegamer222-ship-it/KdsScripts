@@ -10,13 +10,20 @@ Banco de dados **MongoDB**. Pronto para deploy na Vercel.
 
 ```bash
 npm install
-cp .env.example .env.local     # preencha MONGODB_URI, STAFF_USERNAME e STAFF_PASSWORD
 npm run check                  # testa a conexão com o banco (ou o modo local)
 npm run dev                    # http://localhost:3000
 ```
 
+As credenciais ficam no **`.env` da raiz (versionado a pedido do dono — mantenha o
+repositório PRIVADO)**. Sem `.env`, copie `.env.example` e preencha `MONGODB_URI`,
+`STAFF_USERNAME` e `STAFF_PASSWORD`. ⚠️ Se trocar a senha do Mongo no Atlas, atualize
+a `MONGODB_URI` aqui **e** nas variáveis da hospedagem (Vercel), senão volta o erro
+"Não foi possível entrar / criar a conta".
+
 A primeira requisição cria os índices e a **conta de staff** definida em `STAFF_USERNAME` /
-`STAFF_PASSWORD`. Entre por `/entrar` e o painel fica em `/staff`.
+`STAFF_PASSWORD`, e ressincroniza a senha dela com o `.env` a cada boot (trocar a senha
+pelo site é sobrescrito no restart se o `.env` estiver diferente — troque no `.env`).
+Entre por `/entrar` e o painel fica em `/staff`.
 
 **Dois modos de armazenamento:**
 
@@ -26,8 +33,9 @@ A primeira requisição cria os índices e a **conta de staff** definida em `STA
   o site guarda tudo no arquivo `data/local-db.json` — contas, sessões, scripts e jogos
   funcionam sem banco nenhum. As senhas de staff continuam em `STAFF_USERNAME`/`STAFF_PASSWORD`.
 
-O arquivo `.env.local` não vem preenchido no pacote — copie o `.env.example` e coloque as
-suas credenciais (ou rode sem `MONGODB_URI` para o modo local).
+O `.env` da raiz já vem preenchido e versionado (a pedido do dono). Na Vercel, cadastre
+as **mesmas** variáveis em *Settings → Environment Variables* — a Vercel não lê o `.env`
+do Git. Sem `MONGODB_URI`, o site roda em modo local (`data/local-db.json`).
 
 ---
 

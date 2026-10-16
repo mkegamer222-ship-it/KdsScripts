@@ -18,10 +18,12 @@ import { getLocalDb } from "./local-store";
 
 const DB_NAME = process.env.MONGODB_DB || "kdss";
 
-/** Tempo máximo esperando o banco NA PRIMEIRA tentativa (depois disso o site responde sem banco) */
-const SERVER_SELECTION_MS = Number(process.env.MONGODB_TIMEOUT_MS || 2500);
+/** Tempo máximo esperando o banco NA PRIMEIRA tentativa (depois disso o site responde sem banco).
+ * 10s (não 2,5s): o Atlas em cold start / cluster grátis passa fácil de 2,5s
+ * e o login/cadastro morria com "Não foi possível entrar/criar a conta". */
+const SERVER_SELECTION_MS = Number(process.env.MONGODB_TIMEOUT_MS || 10_000);
 /** Quanto tempo o circuito fica aberto (sem tentar conectar) depois de uma falha */
-const COOLDOWN_MS = Number(process.env.MONGODB_COOLDOWN_MS || 60_000);
+const COOLDOWN_MS = Number(process.env.MONGODB_COOLDOWN_MS || 15_000);
 
 /**
  * Existe alguma configuração de Mongo? Sem nada disso o site roda em
@@ -34,9 +36,22 @@ export function mongoConfigured(): boolean {
   return false;
 }
 
+/**
+ * Limpa a URI colada: remove aspas, colchetes e o lixo de link markdown
+ * ("[senha@host](mailto:...)") que o Atlas/geradores às vezes produzem ao
+ * copiar — era exatamente isso que quebrava a conexão (bad auth / parse).
+ */
+export function cleanMongoUri(raw: string): string {
+  let uri = String(raw || "").trim().replace(/^["']|["']$/g, "").trim();
+  // "[user:pass@host](mailto:pass@host)" → "user:pass@host"
+  uri = uri.replace(/\]\([^)]*\)/g, "");
+  uri = uri.replace(/[\[\]]/g, "");
+  return uri.trim();
+}
+
 function buildUri(): string {
   const direct = process.env.MONGODB_URI?.trim();
-  if (direct) return direct;
+  if (direct) return cleanMongoUri(direct);
 
   const user = process.env.MONGODB_USERNAME;
   const pass = process.env.MONGODB_PASSWORD;
