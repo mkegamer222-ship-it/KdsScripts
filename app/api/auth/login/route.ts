@@ -20,7 +20,11 @@ export async function POST(req: Request) {
 
   const result = await loginUser(String(body?.username ?? ""), String(body?.password ?? ""));
   if (!result.ok) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 401 });
+    const status = result.error.startsWith("Banco de dados indisponível") ? 503 : 401;
+    return NextResponse.json(
+      { ok: false, error: result.error },
+      { status, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   return NextResponse.json({ ok: true, user: result.user }, { headers: { "Cache-Control": "no-store" } });

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import AuthUnavailable from "@/components/AuthUnavailable";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { roleLabel } from "@/lib/permissions";
 import type { ScriptListItem } from "@/lib/types";
@@ -21,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function ContaPage() {
-  const { user, loading, refresh } = useAuth();
+  const { user, loading, error, refresh } = useAuth();
   const router = useRouter();
   const [scripts, setScripts] = useState<ScriptListItem[]>([]);
   const [loadingScripts, setLoadingScripts] = useState(false);
@@ -29,8 +30,8 @@ export default function ContaPage() {
   const [busting, setBusting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/entrar");
-  }, [loading, user, router]);
+    if (!loading && !error && !user) router.replace("/entrar");
+  }, [loading, error, user, router]);
 
   const loadScripts = useCallback(async () => {
     if (!user) return;
@@ -59,6 +60,8 @@ export default function ContaPage() {
       refresh();
     }
   }
+
+  if (!user && error) return <AuthUnavailable onRetry={refresh} loading={loading} />;
 
   if (loading || !user) {
     return (

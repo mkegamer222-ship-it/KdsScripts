@@ -4,23 +4,24 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import AuthUnavailable from "@/components/AuthUnavailable";
 import ScriptForm from "@/components/ScriptForm";
 import { isStaff } from "@/lib/permissions";
 import type { ScriptDoc } from "@/lib/types";
 
 export default function EditarScriptPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, error: authError, refresh } = useAuth();
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const [script, setScript] = useState<ScriptDoc | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/entrar");
-  }, [loading, user, router]);
+    if (!loading && !authError && !user) router.replace("/entrar");
+  }, [loading, authError, user, router]);
 
   useEffect(() => {
-    if (!params?.slug) return;
+    if (!user || !params?.slug) return;
     fetch(`/api/my-scripts/${encodeURIComponent(params.slug)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
@@ -28,7 +29,9 @@ export default function EditarScriptPage() {
         else setError(d.error || "Script não encontrado.");
       })
       .catch(() => setError("Não foi possível carregar o script."));
-  }, [params?.slug]);
+  }, [params?.slug, user]);
+
+  if (!user && authError) return <AuthUnavailable onRetry={refresh} loading={loading} />;
 
   if (loading || !user) return <div className="skeleton mt-6 h-96 w-full rounded-2xl" />;
 

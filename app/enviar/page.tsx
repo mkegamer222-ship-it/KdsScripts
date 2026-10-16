@@ -4,16 +4,19 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import AuthUnavailable from "@/components/AuthUnavailable";
 import ScriptForm from "@/components/ScriptForm";
 import { isStaff } from "@/lib/permissions";
 
 export default function EnviarPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, error, refresh } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/entrar");
-  }, [loading, user, router]);
+    if (!loading && !error && !user) router.replace("/entrar");
+  }, [loading, error, user, router]);
+
+  if (!user && error) return <AuthUnavailable onRetry={refresh} loading={loading} />;
 
   if (loading || !user) {
     return (

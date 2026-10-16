@@ -25,7 +25,11 @@ export async function POST(req: Request) {
   );
 
   if (!result.ok) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
+    const status = result.error.startsWith("Banco de dados indisponível") ? 503 : 400;
+    return NextResponse.json(
+      { ok: false, error: result.error },
+      { status, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   return NextResponse.json({ ok: true, user: result.user }, { headers: { "Cache-Control": "no-store" } });

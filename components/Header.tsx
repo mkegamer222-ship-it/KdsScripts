@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { destroySessionAndRedirect } from "@/app/actions/auth";
-import type { SessionUser } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
 import { isStaff } from "@/lib/permissions";
 
 const NAV = [
@@ -58,27 +57,40 @@ function SearchBox({ className = "" }: { className?: string }) {
 
 export default function Header() {
   const pathname = usePathname();
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const router = useRouter();
+  const { user, loading, error, refresh } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   useEffect(() => {
     setMobileOpen(false);
     setMenuOpen(false);
+    setLogoutError(null);
   }, [pathname]);
 
-  useEffect(() => {
-    let alive = true;
-    fetch("/api/me", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => alive && setUser(d.user ?? null))
-      .catch(() => {})
-      .finally(() => alive && setLoaded(true));
-    return () => {
-      alive = false;
-    };
-  }, [pathname]);
+  async function logout() {
+    if (logoutBusy) return;
+    setLogoutBusy(true);
+    setLogoutError(null);
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error("logout_failed");
+
+      await refresh();
+      setLogoutBusy(false);
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setLogoutError("Não foi possível sair agora. Tente novamente.");
+      setLogoutBusy(false);
+    }
+  }
 
   const staff = user ? isStaff(user.role) : false;
 
@@ -131,8 +143,12 @@ export default function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:ml-3">
-          {!loaded ? (
+          {loading && !user ? (
             <div className="skeleton h-9 w-24 rounded-xl" />
+          ) : error && !user ? (
+            <button onClick={() => void refresh()} className="btn btn-ghost" title={error}>
+              Tentar novamente
+            </button>
           ) : user ? (
             <div className="relative">
               <button
@@ -166,11 +182,19 @@ export default function Header() {
                       Painel da staff
                     </Link>
                   )}
-                  <form action={destroySessionAndRedirect}>
-                    <button className="w-full border-t border-white/8 px-3 py-2 text-left text-[13.5px] text-rose-300 hover:bg-white/5">
-                      Sair
-                    </button>
-                  </form>
+                  {logoutError && (
+                    <p role="alert" className="px-3 py-2 text-[12px] text-rose-300">
+                      {logoutError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void logout()}
+                    disabled={logoutBusy}
+                    className="w-full border-t border-white/8 px-3 py-2 text-left text-[13.5px] text-rose-300 hover:bg-white/5 disabled:opacity-60"
+                  >
+                    {logoutBusy ? "Saindo..." : "Sair"}
+                  </button>
                 </div>
               )}
             </div>
