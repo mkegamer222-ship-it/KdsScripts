@@ -910,7 +910,16 @@ class MySqlDatabase implements Database {
 const mysqlDatabase = new MySqlDatabase();
 
 export async function getDb(): Promise<Database> {
-  if (!mysqlConfigured()) return getLocalDb() as unknown as Database;
+  if (!mysqlConfigured()) {
+    // O armazenamento em arquivo é útil no desenvolvimento, mas não é uma
+    // fonte de sessão compartilhada entre instâncias serverless em produção.
+    if (process.env.NODE_ENV === "production") {
+      throw new DbUnavailableError(
+        "MySQL não configurado. Defina MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER e MYSQL_PASSWORD para persistência em produção.",
+      );
+    }
+    return getLocalDb() as unknown as Database;
+  }
   await getPool();
   return mysqlDatabase;
 }
@@ -938,7 +947,8 @@ export type HealthInfo = {
 };
 
 function modeOf(): HealthInfo["mode"] {
-  return mysqlConfigured() ? "mysql" : "local";
+  if (mysqlConfigured()) return "mysql";
+  return process.env.NODE_ENV === "production" ? "ausente" : "local";
 }
 
 function hintFor(message: string) {

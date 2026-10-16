@@ -17,6 +17,7 @@ npm run dev                    # http://localhost:3000
 Para desenvolvimento, copie `.env.example` para `.env.local` e preencha as variáveis
 `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER` e `MYSQL_PASSWORD`, além de
 `STAFF_USERNAME` e `STAFF_PASSWORD`. Não coloque credenciais reais no `.env.example`.
+Esta versão usa MySQL; variáveis antigas `MONGODB_*` não ativam nem conectam um banco.
 
 ⚠️ O arquivo `.env` da raiz já é versionado neste repositório e contém credenciais:
 conserve o repositório privado. Em produção, prefira cadastrar as variáveis diretamente
@@ -31,7 +32,9 @@ a cada boot. Entre por `/entrar`; o painel fica em `/staff`.
 - **MySQL**: quando as variáveis `MYSQL_*` obrigatórias estão configuradas, o app cria
   automaticamente as tabelas `users`, `sessions`, `scripts` e `games`.
 - **Modo local**: sem configuração MySQL, os dados ficam em `data/local-db.json`. É útil
-  para desenvolvimento, mas não substitui um banco persistente em produção.
+  para desenvolvimento, mas não substitui um banco persistente em produção. Em `NODE_ENV=production`,
+  o app recusa esse modo e informa que o MySQL precisa ser configurado — assim uma instância
+  serverless não aparenta desconectar contas ao não encontrar sessões gravadas em outra instância.
 
 > **Compatibilidade de hospedagem:** o projeto é Next.js/Node.js. O InfinityFree oferece
 > hospedagem PHP e pode restringir conexões MySQL remotas; portanto, o app hospedado na

@@ -101,34 +101,36 @@ export async function createSession(userId: string) {
 export async function destroySession() {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
-  if (token) {
-    await (await sessions()).deleteOne({ token }).catch(() => {});
+
+  try {
+    if (token) await (await sessions()).deleteOne({ token });
+  } catch {
+    // Mesmo se o banco estiver fora, apague o cookie local para permitir sair.
+  } finally {
+    jar.delete(COOKIE_NAME);
   }
-  jar.delete(COOKIE_NAME);
 }
 
 /** Usuário da sessão atual (ou null). */
 export async function getCurrentUser(): Promise<SessionUser | null> {
-  try {
-    const jar = await cookies();
-    const token = jar.get(COOKIE_NAME)?.value;
-    if (!token) return null;
+  const jar = await cookies();
+  const token = jar.get(COOKIE_NAME)?.value;
+  if (!token) return null;
 
-    const session = await (await sessions()).findOne({ token });
-    if (!session || new Date(session.expiresAt) < new Date()) return null;
+  // Uma falha de banco não significa que o usuário está deslogado. Deixe o
+  // erro subir para a rota decidir entre indisponibilidade e sessão inválida.
+  const session = await (await sessions()).findOne({ token });
+  if (!session || !session.expiresAt || new Date(session.expiresAt) <= new Date()) return null;
 
-    const user = await (await users()).findOne({ _id: session.userId });
-    if (!user || user.banned) return null;
+  const user = await (await users()).findOne({ _id: session.userId });
+  if (!user || user.banned) return null;
 
-    return {
-      id: String(user._id),
-      username: user.displayName || user.username,
-      role: user.role,
-      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : undefined,
-    };
-  } catch {
-    return null;
-  }
+  return {
+    id: String(user._id),
+    username: user.displayName || user.username,
+    role: user.role,
+    createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : undefined,
+  };
 }
 
 /* ------------------------------------------------------------------ */
