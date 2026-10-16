@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser, isStaff } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mysql";
 import { bustDataCache } from "@/lib/data";
 import { isValidPlaceId } from "@/lib/roblox";
 import { parseList, uniqueSlug, upsertGameFromPlaceId } from "@/lib/actions-helpers";

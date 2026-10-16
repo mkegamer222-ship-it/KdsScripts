@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, isStaff } from "@/lib/auth";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mysql";
 import { bustDataCache } from "@/lib/data";
 import { upsertGameFromPlaceId } from "@/lib/actions-helpers";
 import { isValidPlaceId } from "@/lib/roblox";

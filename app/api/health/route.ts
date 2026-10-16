@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { pingDb } from "@/lib/mongodb";
+import { pingDb } from "@/lib/mysql";
 import { getCurrentUser, isStaff } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";

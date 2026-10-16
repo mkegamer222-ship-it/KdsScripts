@@ -1,7 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { ObjectId } from "mongodb";
-import { getDb } from "./mongodb";
+import { getDb } from "./mysql";
 import type { Role } from "./permissions";
 import type { SessionUser } from "./types";
 
@@ -12,7 +11,7 @@ import type { SessionUser } from "./types";
 export type { Role, SessionUser };
 
 export type UserDoc = {
-  _id?: ObjectId;
+  _id?: string;
   username: string; // sempre minúsculo
   displayName: string;
   passwordHash: string;
@@ -78,11 +77,14 @@ export function validatePassword(raw: string): string | null {
 const users = async () => (await getDb()).collection<UserDoc>("users");
 const sessions = async () => (await getDb()).collection("sessions");
 
-export async function createSession(userId: ObjectId) {
+export async function createSession(userId: string) {
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
 
-  await (await sessions()).insertOne({ token, userId, createdAt: new Date(), expiresAt });
+  const sessionCollection = await sessions();
+  // O MySQL não tem TTL automático como o índice anterior do MongoDB.
+  await sessionCollection.deleteMany({ expiresAt: { $lte: new Date() } }).catch(() => {});
+  await sessionCollection.insertOne({ token, userId, createdAt: new Date(), expiresAt });
 
   const jar = await cookies();
   jar.set(COOKIE_NAME, token, {
@@ -174,8 +176,8 @@ export async function registerUser(
   } catch (err: any) {
     // Nunca engolir o erro em silêncio: era por isso que só aparecia a
     // mensagem genérica e ninguém sabia que o banco estava fora/errado.
-    console.error("[auth] registerUser falhou:", err?.code || "", err?.message || err);
-    if (err?.code === 11000) return { ok: false, error: "Esse usuário já está em uso." };
+    console.error("[auth] registerUser falhou:", err?.code || err?.name || "erro desconhecido");
+    if (err?.code === 11000 || err?.code === "ER_DUP_ENTRY") return { ok: false, error: "Esse usuário já está em uso." };
     if (err?.name === "DbUnavailableError" || err?.code === "DB_UNAVAILABLE") {
       return {
         ok: false,
@@ -211,7 +213,7 @@ export async function loginUser(usernameRaw: string, password: string): Promise<
       },
     };
   } catch (err: any) {
-    console.error("[auth] loginUser falhou:", err?.code || "", err?.message || err);
+    console.error("[auth] loginUser falhou:", err?.code || err?.name || "erro desconhecido");
     if (err?.name === "DbUnavailableError" || err?.code === "DB_UNAVAILABLE") {
       return {
         ok: false,
@@ -228,7 +230,7 @@ export async function changePassword(userId: string, currentPassword: string, ne
 
   try {
     const col = await users();
-    const user = await col.findOne({ _id: new ObjectId(userId) });
+    const user = await col.findOne({ _id: userId });
     if (!user) return { ok: false as const, error: "Conta não encontrada." };
     if (!verifyPassword(currentPassword, user.salt, user.passwordHash)) {
       return { ok: false as const, error: "Senha atual incorreta." };

@@ -1,12 +1,12 @@
 /**
  * Armazenamento local em arquivo (JSON) — "modo sem banco".
  *
- * Ativa automaticamente quando MONGODB_URI (e companhia) NÃO estão definidos.
- * Implementa o subconjunto da API do mongodb que o projeto usa, para o site
- * funcionar completo (contas, sessões, scripts, jogos) sem cluster externo:
+ * Ativa automaticamente quando as variáveis MYSQL_* não estão definidas.
+ * Implementa o subconjunto das operações de dados usadas pelo projeto, para o site
+ * funcionar completo (contas, sessões, scripts, jogos) sem servidor externo:
  * ideal para desenvolvimento local e ambientes sem rede ao banco.
  *
- * Com MONGODB_URI definida, este arquivo não é usado — o MongoDB é a fonte.
+ * Com a configuração MySQL definida, este arquivo não é usado — o MySQL é a fonte.
  * Os dados persistem em `data/local-db.json`.
  */
 
@@ -57,7 +57,7 @@ function clone<T>(value: T): T {
 /* Filtros                                                             */
 /* ------------------------------------------------------------------ */
 
-/** ObjectId → hex string, para comparação com o que está gravado. */
+/** Normaliza IDs que ofereçam toHexString para comparação com os IDs gravados. */
 function idOf(value: any): any {
   if (value && typeof value === "object" && typeof value.toHexString === "function") {
     return value.toHexString();
